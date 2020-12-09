@@ -3,6 +3,7 @@ package service
 import (
     "log"
     "fmt"
+    "bytes"
     "net/http"
     "io"
     "io/ioutil"
@@ -17,10 +18,34 @@ type AddressResponse struct {
     Data []model.Address
 }
 
+type AddressRequest struct {
+    UserId int `json: "user_id"`
+    Addresses []model.Address `json: "addresses"`
+}
+
 var AddressUrl = "http://localhost:3100"
 
-func GetAddressOfUser (userID int) ([]model.Address, error) {
+func GetAddressOfUser(userID int) ([]model.Address, error) {
     res, err := http.Get(AddressUrl + "/addresses?user_id=" + strconv.Itoa(userID))
+    if err != nil {
+        return nil, err
+    }
+
+    defer res.Body.Close()
+
+    return ConvertResponseToAddress(res.Body)
+}
+
+func storeAddressOfUser(userID int, addresses []model.Address) ([]model.Address, error) {
+    body, err := json.Marshal(AddressRequest{
+        UserId: userID,
+        Addresses: addresses,
+    })
+    if err != nil {
+        return nil, err
+    }
+
+    res, err := http.Post(AddressUrl + "/addresses", "application/json", bytes.NewBuffer(body))
     if err != nil {
         return nil, err
     }

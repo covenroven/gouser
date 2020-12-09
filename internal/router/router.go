@@ -17,8 +17,8 @@ func Init() (chi.Router, error) {
 	    r.Get("/", api.IndexUsers);
 	    r.Post("/", api.StoreUser);
 	    r.Get("/{userID}", api.ShowUser);
-	    // r.Put("/{userID}", api.ShowUser);
-	    // r.Delete("/{userID}", api.ShowUser);
+	    r.Put("/{userID}", api.UpdateUser);
+	    r.Delete("/{userID}", api.DeleteUser);
 	})
 
 	return r, nil

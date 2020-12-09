@@ -50,6 +50,7 @@ func StoreUser(w http.ResponseWriter, r *http.Request) {
             Message: "No parameter provided",
             Data: []model.Model{},
         })
+        return;
     }
 
     var param model.User
@@ -60,6 +61,7 @@ func StoreUser(w http.ResponseWriter, r *http.Request) {
             Message: err.Error(),
             Data: []model.Model{},
         })
+        return;
     }
 
     var user model.User
@@ -85,7 +87,7 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
 
     userID := chi.URLParam(r, "userID")
 
-    row := db.QueryRow("SELECT * FROM users WHERE id = $1", userID)
+    row := db.QueryRow("SELECT id, name, email FROM users WHERE id = $1", userID)
 
     var user model.User
     err := row.Scan(&user.Id, &user.Name, &user.Email)
@@ -110,4 +112,85 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
     db, _ := database.Connect()
     defer db.Close()
+
+    if r.Body == nil {
+        responseWithJson(w, model.Response{
+            Status: 422,
+            Message: "No parameter provided",
+            Data: []model.Model{},
+        })
+    }
+
+    userID := chi.URLParam(r, "userID")
+
+    row := db.QueryRow("SELECT id FROM users WHERE id = $1", userID)
+
+    var uid int
+    err := row.Scan(&uid)
+    if err != nil {
+        responseWithJson(w, model.Response{
+            Status: 404,
+            Message: "Not found",
+            Data: []model.Model{},
+        })
+        return
+    }
+
+    var param model.User
+    err = json.NewDecoder(r.Body).Decode(&param)
+    if err != nil {
+        responseWithJson(w, model.Response{
+            Status: 400,
+            Message: err.Error(),
+            Data: []model.Model{},
+        })
+    }
+
+    _, err = db.Exec(
+        "UPDATE users SET name=$1, email=$2 WHERE id = $3",
+        param.Name,
+        param.Email,
+        userID,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    param.Id = uid
+    responseWithJson(w, model.Response{
+        Status: 200,
+        Message: "Updated",
+        Data: []model.Model{param},
+    })
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+    db, _ := database.Connect()
+    defer db.Close()
+
+    if r.Body == nil {
+        responseWithJson(w, model.Response{
+            Status: 422,
+            Message: "No parameter provided",
+            Data: []model.Model{},
+        })
+    }
+
+    userID := chi.URLParam(r, "userID")
+
+    _, err := db.Exec("DELETE FROM users WHERE id = $1", userID)
+
+    if err != nil {
+        log.Fatal(err)
+        responseWithJson(w, model.Response{
+            Status: 500,
+            Message: "Something went wrong",
+            Data: []model.Model{},
+        })
+        return
+    }
+
+    responseWithJson(w, model.Response{
+        Status: 204,
+        Message: "Ok",
+    })
 }
