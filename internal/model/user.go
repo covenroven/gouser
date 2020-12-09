@@ -1,12 +1,8 @@
 package model
 
-import (
-    "database/sql"
-)
-
 type User struct {
     Id int `json: "id"`
-    Name sql.NullString `json: "name"`
+    Name string `json: "name"`
     Email string `json: "email"`
     Addresses []Address `json: "addresses"`
 }
