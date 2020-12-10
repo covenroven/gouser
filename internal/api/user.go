@@ -21,7 +21,7 @@ func IndexUsers(w http.ResponseWriter, r *http.Request) {
     var users []model.Model
     rows, err := db.Query("SELECT * FROM users")
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
 
     for rows.Next() {
@@ -74,6 +74,15 @@ func StoreUser(w http.ResponseWriter, r *http.Request) {
         log.Fatal(err)
     }
     fmt.Println(user)
+
+    // Store addresses if exists
+    if param.Addresses != nil {
+        _, err = service.StoreAddressOfUser(user.Id, param.Addresses)
+        if err != nil {
+            log.Fatal(err)
+        }
+    }
+    user.Addresses = param.Addresses
     responseWithJson(w, model.Response{
         Status: 201,
         Message: "Created",
@@ -92,6 +101,7 @@ func ShowUser(w http.ResponseWriter, r *http.Request) {
     var user model.User
     err := row.Scan(&user.Id, &user.Name, &user.Email)
     if err != nil {
+        log.Fatal(err.Error())
         responseWithJson(w, model.Response{
             Status: 404,
             Message: "Not found",

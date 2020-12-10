@@ -5,6 +5,7 @@ import (
     "fmt"
     "bytes"
     "net/http"
+    "os"
     "io"
     "io/ioutil"
     "strconv"
@@ -23,7 +24,7 @@ type AddressRequest struct {
     Addresses []model.Address `json: "addresses"`
 }
 
-var AddressUrl = "http://localhost:3100"
+var AddressUrl = os.Getenv("ADDRESS_SERVICE_URL")
 
 func GetAddressOfUser(userID int) ([]model.Address, error) {
     res, err := http.Get(AddressUrl + "/addresses?user_id=" + strconv.Itoa(userID))
@@ -36,7 +37,7 @@ func GetAddressOfUser(userID int) ([]model.Address, error) {
     return ConvertResponseToAddress(res.Body)
 }
 
-func storeAddressOfUser(userID int, addresses []model.Address) ([]model.Address, error) {
+func StoreAddressOfUser(userID int, addresses []model.Address) ([]model.Address, error) {
     body, err := json.Marshal(AddressRequest{
         UserId: userID,
         Addresses: addresses,
@@ -45,7 +46,7 @@ func storeAddressOfUser(userID int, addresses []model.Address) ([]model.Address,
         return nil, err
     }
 
-    res, err := http.Post(AddressUrl + "/addresses", "application/json", bytes.NewBuffer(body))
+    res, err := http.Post(AddressUrl + "/addresses/batch", "application/json", bytes.NewBuffer(body))
     if err != nil {
         return nil, err
     }
