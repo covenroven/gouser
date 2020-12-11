@@ -19,7 +19,7 @@ func IndexUsers(w http.ResponseWriter, r *http.Request) {
     defer db.Close()
 
     var users []model.Model
-    rows, err := db.Query("SELECT * FROM users")
+    rows, err := db.Query("SELECT id, name, email FROM users")
     if err != nil {
         log.Fatal(err)
     }
@@ -149,6 +149,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
     var param model.User
     err = json.NewDecoder(r.Body).Decode(&param)
     if err != nil {
+        log.Println(err.Error())
         responseWithJson(w, model.Response{
             Status: 400,
             Message: err.Error(),
@@ -163,7 +164,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
         userID,
     )
     if err != nil {
-        log.Fatal(err)
+        log.Println(err.Error())
     }
     param.Id = uid
     responseWithJson(w, model.Response{
